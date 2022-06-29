@@ -11,6 +11,7 @@ wire [7:0] serial2tcp_sink_data;
 
 initial begin
     sys_clk = 0;
+    $hello;
 end
 
 always #5 sys_clk = ~sys_clk;

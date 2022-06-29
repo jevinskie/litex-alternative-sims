@@ -4,5 +4,6 @@
 **/analyzer.csv
 **/*.vcd
 **/stream.cfg
+**/*.vpi
 
 serial2tcp-bare/loopback_tb
