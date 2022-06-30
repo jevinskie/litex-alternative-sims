@@ -48,11 +48,6 @@ class Platform(SimPlatform):
 # Bench SoC ----------------------------------------------------------------------------------------
 
 
-class Dummy(Module):
-    def __init__(self, sink, source):
-        self.comb += sink.connect(source)
-
-
 class SimSoC(SoCCore):
     def __init__(self, sys_clk_freq=None, **kwargs):
         platform = Platform()
