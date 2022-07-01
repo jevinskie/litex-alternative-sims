@@ -6,4 +6,4 @@
 **/stream.cfg
 **/*.vpi
 
-serial2tcp-bare/loopback_tb
+serial2tcp_bare/loopback_tb
