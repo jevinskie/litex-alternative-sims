@@ -6,15 +6,15 @@
 # SPDX-License-Identifier: BSD-2-Clause
 
 import argparse
+from pathlib import Path
 
-from liteeth.phy.model import LiteEthPHYModel
 from litex.build.generic_platform import *
 from litex.build.sim import SimPlatform
 from litex.build.sim.config import SimConfig
+from litex.gen.fhdl.namer import escape_identifier_name
 from litex.soc.cores.uart import RS232PHYModel
 from litex.soc.integration.builder import *
 from litex.soc.integration.soc_core import *
-from litex.soc.interconnect import stream
 from migen import *
 
 # IOs ----------------------------------------------------------------------------------------------
@@ -41,16 +41,18 @@ _io = [
 
 
 class Platform(SimPlatform):
-    def __init__(self):
-        SimPlatform.__init__(self, "simple_sim", _io)
+    def __init__(self, sim_toolchain):
+        mname = escape_identifier_name(Path(__file__).stem)
+        print(f"mname: {mname}")
+        super().__init__(self, _io, name=mname, toolchain=sim_toolchain)
 
 
 # Bench SoC ----------------------------------------------------------------------------------------
 
 
 class SimSoC(SoCCore):
-    def __init__(self, sys_clk_freq=None, **kwargs):
-        platform = Platform()
+    def __init__(self, sim_toolchain, sys_clk_freq=None, **kwargs):
+        platform = Platform(sim_toolchain)
         sys_clk_freq = int(sys_clk_freq)
 
         # SoCCore ----------------------------------------------------------------------------------
@@ -77,6 +79,7 @@ class SimSoC(SoCCore):
 def main():
     parser = argparse.ArgumentParser(description="LiteX Alternative Sim Test")
     parser.add_argument("--debug-soc-gen", action="store_true", help="Don't run simulation")
+    parser.add_argument("--sim-toolchain", default="verilator", help="Simulation toolchain")
     builder_args(parser)
     soc_core_args(parser)
     args = parser.parse_args()
@@ -97,7 +100,7 @@ def main():
 
     builder_kwargs["csr_csv"] = "csr.csv"
 
-    soc = SimSoC(**soc_kwargs)
+    soc = SimSoC(sim_toolchain=args.sim_toolchain, **soc_kwargs)
     if not args.debug_soc_gen:
         builder = Builder(soc, **builder_kwargs)
         for i in range(2):
