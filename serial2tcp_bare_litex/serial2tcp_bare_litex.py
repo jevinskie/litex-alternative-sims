@@ -42,8 +42,10 @@ _io = [
 
 class Platform(SimPlatform):
     def __init__(self, sim_toolchain):
-        mname = escape_identifier_name(Path(__file__).stem)
-        print(f"mname: {mname}")
+        if sim_toolchain == "verilator":
+            mname = "sim"
+        else:
+            mname = escape_identifier_name(Path(__file__).stem)
         super().__init__(self, _io, name=mname, toolchain=sim_toolchain)
 
 
