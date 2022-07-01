@@ -9,7 +9,7 @@ import argparse
 from pathlib import Path
 
 from litex.build.generic_platform import *
-from litex.build.sim import SimPlatform
+from litex.build.sim import SimPlatform, sim_build_argdict, sim_build_args
 from litex.build.sim.config import SimConfig
 from litex.gen.fhdl.namer import escape_identifier_name
 from litex.soc.cores.uart import RS232PHYModel
@@ -78,12 +78,16 @@ class SimSoC(SoCCore):
 # Main ---------------------------------------------------------------------------------------------
 
 
-def main():
-    parser = argparse.ArgumentParser(description="LiteX Alternative Sim Test")
-    parser.add_argument("--debug-soc-gen", action="store_true", help="Don't run simulation")
-    parser.add_argument("--sim-toolchain", default="verilator", help="Simulation toolchain")
+def sim_args(parser):
     builder_args(parser)
     soc_core_args(parser)
+    sim_build_args(parser)
+    parser.add_argument("--debug-soc-gen", action="store_true", help="Don't run simulation")
+
+
+def main():
+    parser = argparse.ArgumentParser(description="LiteX Alternative Sim Test")
+    sim_args(parser)
     args = parser.parse_args()
 
     sys_clk_freq = int(1e6)
@@ -94,6 +98,7 @@ def main():
 
     soc_kwargs = soc_core_argdict(args)
     builder_kwargs = builder_argdict(args)
+    sim_build_kwargs = sim_build_argdict(args)
 
     soc_kwargs["sys_clk_freq"] = sys_clk_freq
     soc_kwargs["cpu_type"] = "None"
@@ -108,11 +113,7 @@ def main():
         for i in range(2):
             build = i == 0
             run = i == 1 and builder.compile_gateware
-            builder.build(
-                build=build,
-                run=run,
-                sim_config=sim_config,
-            )
+            builder.build(build=build, run=run, sim_config=sim_config, **sim_build_kwargs)
 
 
 if __name__ == "__main__":
