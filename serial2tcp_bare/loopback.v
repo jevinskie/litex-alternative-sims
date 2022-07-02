@@ -1,3 +1,4 @@
+`timescale 1ns/1ps
 
 module serial2tcp_loopback (
     input  wire sys_clk,

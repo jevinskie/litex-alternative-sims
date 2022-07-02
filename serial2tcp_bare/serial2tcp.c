@@ -1,35 +1,47 @@
+#undef NDEBUG
 #include <assert.h>
-#include <string.h>
-#include <stdio.h>
+#include <inttypes.h>
 #include <stdint.h>
+#include <stdio.h>
+#include <string.h>
 #include <vpi_user.h>
 
-static int hello_compiletf(char*user_data)
-{
-      return 0;
+PLI_INT32 clk_cb(struct t_cb_data *cb_data_ptr) {
+    uint64_t time = ((uint64_t)cb_data_ptr->time->high << 32) | cb_data_ptr->time->low;
+    printf("@ %" PRIu64 " clk: %d\n", time, cb_data_ptr->value->value.integer);
+    return 0;
 }
 
-static int hello_calltf(char*user_data)
-{
-      vpi_printf("Hello, World!\n");
-      return 0;
+PLI_INT32 serial2tcp_register_change(struct t_cb_data *cb_data_ptr) {
+    vpiHandle clk = vpi_handle_by_name("serial2tcp_loopback_tb.sys_clk", NULL);
+    assert(clk);
+    s_vpi_time timerec = {vpiSimTime, 0, 0, 0};
+    s_vpi_value valrec = {vpiIntVal, {.integer = 42}};
+    s_cb_data cb_data  = {0};
+    cb_data.reason     = cbValueChange;
+    cb_data.cb_rtn     = clk_cb;
+    cb_data.obj        = clk;
+    cb_data.time       = &timerec;
+    cb_data.value      = &valrec;
+    cb_data.user_data  = (void *)clk;
+    assert(vpi_register_cb(&cb_data));
 }
 
-void hello_register()
-{
-      s_vpi_systf_data tf_data;
+void serial2tcp_register() {
+    s_cb_data cb_data;
+    s_vpi_time timerec = {vpiSuppressTime, 0, 0, 0};
 
-      tf_data.type      = vpiSysTask;
-      tf_data.tfname    = "$hello";
-      tf_data.calltf    = hello_calltf;
-      tf_data.compiletf = hello_compiletf;
-      tf_data.sizetf    = 0;
-      tf_data.user_data = 0;
-      vpi_register_systf(&tf_data);
+    cb_data.time      = &timerec;
+    cb_data.value     = 0;
+    cb_data.user_data = 0;
+    cb_data.obj       = 0;
+    cb_data.reason    = cbEndOfCompile;
+    cb_data.cb_rtn    = serial2tcp_register_change;
+
+    vpi_register_cb(&cb_data);
 }
 
-__attribute__((used))
 void (*vlog_startup_routines[])() = {
-    hello_register,
-    0
+    serial2tcp_register,
+    NULL,
 };

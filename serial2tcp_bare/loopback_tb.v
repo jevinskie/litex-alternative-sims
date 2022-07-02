@@ -1,3 +1,4 @@
+`timescale 1ns/1ps
 
 module serial2tcp_loopback_tb ();
 
@@ -11,7 +12,7 @@ wire [7:0] serial2tcp_sink_data;
 
 initial begin
     sys_clk = 0;
-    $hello;
+    // $vpi_tree;
 end
 
 always #5 sys_clk = ~sys_clk;
