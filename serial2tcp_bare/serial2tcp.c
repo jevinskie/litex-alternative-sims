@@ -6,15 +6,23 @@
 #include <string.h>
 #include <vpi_user.h>
 
+static vpiHandle sink_data;
+
 PLI_INT32 clk_cb(struct t_cb_data *cb_data_ptr) {
     uint64_t time = ((uint64_t)cb_data_ptr->time->high << 32) | cb_data_ptr->time->low;
     printf("@ %" PRIu64 " clk: %d\n", time, cb_data_ptr->value->value.integer);
+
+    s_vpi_value sink_data_val = {.format = vpiIntVal};
+    vpi_get_value(sink_data, &sink_data_val);
+    printf("sink_data: 0x%02x\n", sink_data_val.value.integer);
     return 0;
 }
 
 PLI_INT32 serial2tcp_register_change(struct t_cb_data *cb_data_ptr) {
     vpiHandle clk = vpi_handle_by_name("serial2tcp_loopback_tb.sys_clk", NULL);
     assert(clk);
+    sink_data = vpi_handle_by_name("serial2tcp_loopback_tb.serial2tcp_sink_data", NULL);
+    assert(sink_data);
     s_vpi_time timerec = {vpiSimTime, 0, 0, 0};
     s_vpi_value valrec = {vpiIntVal, {.integer = 42}};
     s_cb_data cb_data  = {0};

@@ -11,11 +11,23 @@ wire serial2tcp_sink_ready;
 wire [7:0] serial2tcp_sink_data;
 
 initial begin
-    sys_clk = 0;
+    sys_clk <= 0;
     // $vpi_tree;
 end
 
-always #5 sys_clk = ~sys_clk;
+always #5 sys_clk <= ~sys_clk;
+
+// counter
+reg [7:0] cnt;
+initial begin
+    cnt <= 0;
+end
+
+always @(posedge sys_clk) begin
+    cnt <= cnt + 1;
+end
+
+assign serial2tcp_sink_data = cnt;
 
 serial2tcp_loopback loopback(
     sys_clk,
