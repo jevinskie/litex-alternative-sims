@@ -7,14 +7,24 @@
 #include <vpi_user.h>
 
 static vpiHandle sink_data;
+static s_vpi_value sink_data_val;
 
-PLI_INT32 clk_cb(struct t_cb_data *cb_data_ptr) {
+static PLI_INT32 clk_cb(struct t_cb_data *cb_data_ptr) {
     uint64_t time = ((uint64_t)cb_data_ptr->time->high << 32) | cb_data_ptr->time->low;
     printf("@ %" PRIu64 " clk: %d\n", time, cb_data_ptr->value->value.integer);
 
-    s_vpi_value sink_data_val = {.format = vpiIntVal};
-    vpi_get_value(sink_data, &sink_data_val);
-    printf("sink_data: 0x%02x\n", sink_data_val.value.integer);
+    s_vpi_value sink_data_val_local = {.format = vpiIntVal};
+    vpi_get_value(sink_data, &sink_data_val_local);
+    printf("sink_data: 0x%02x\n", sink_data_val_local.value.integer);
+    printf("sink_data static: 0x%02x\n", sink_data_val.value.integer);
+    return 0;
+}
+
+static PLI_INT32 sink_data_cb(struct t_cb_data *cb_data_ptr) {
+    uint64_t time = ((uint64_t)cb_data_ptr->time->high << 32) | cb_data_ptr->time->low;
+
+    sink_data_val.value.integer = cb_data_ptr->value->value.integer;
+    printf("@ %" PRIu64 " cb: 0x%02x\n", time, sink_data_val.value.integer);
     return 0;
 }
 
@@ -33,6 +43,17 @@ PLI_INT32 serial2tcp_register_change(struct t_cb_data *cb_data_ptr) {
     cb_data.value      = &valrec;
     cb_data.user_data  = (void *)clk;
     assert(vpi_register_cb(&cb_data));
+
+    s_vpi_time timerec2  = {vpiSimTime, 0, 0, 0};
+    sink_data_val.format = vpiIntVal;
+    s_cb_data cb_data2   = {0};
+    cb_data2.reason      = cbValueChange;
+    cb_data2.cb_rtn      = sink_data_cb;
+    cb_data2.obj         = sink_data;
+    cb_data2.time        = &timerec2;
+    cb_data2.value       = &sink_data_val;
+    cb_data2.user_data   = NULL;
+    assert(vpi_register_cb(&cb_data2));
 }
 
 void serial2tcp_register() {
