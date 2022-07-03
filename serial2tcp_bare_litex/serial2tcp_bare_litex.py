@@ -12,6 +12,7 @@ from litex.build.generic_platform import *
 from litex.build.sim import SimPlatform, sim_build_argdict, sim_build_args
 from litex.build.sim.config import SimConfig
 from litex.gen.fhdl.namer import escape_identifier_name
+from litex.gen.fhdl.verilog import VerilogTime
 from litex.soc.cores.uart import RS232PHYModel
 from litex.soc.integration.builder import *
 from litex.soc.integration.soc_core import *
@@ -72,6 +73,8 @@ class SimSoC(SoCCore):
         # Serial -----------------------------------------------------------------------------------
         self.submodules.uart_phy = RS232PHYModel(platform.request("serial"))
         self.comb += self.uart_phy.source.connect(self.uart_phy.sink)
+
+        self.sync += Display("$display time: %0d", VerilogTime())
 
 
 #
