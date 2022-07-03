@@ -24,7 +24,7 @@ initial begin
 end
 
 always @(posedge sys_clk) begin
-    cnt = cnt + 1;
+    cnt <= cnt + 1;
 end
 
 assign serial2tcp_sink_data = cnt;

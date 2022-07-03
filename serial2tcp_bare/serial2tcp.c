@@ -8,6 +8,7 @@
 
 static vpiHandle sink_data;
 static s_vpi_value sink_data_val;
+static s_vpi_time timerec3;
 
 static PLI_INT32 clk_cb(struct t_cb_data *cb_data_ptr) {
     uint64_t time = ((uint64_t)cb_data_ptr->time->high << 32) | cb_data_ptr->time->low;
@@ -25,6 +26,12 @@ static PLI_INT32 sink_data_cb(struct t_cb_data *cb_data_ptr) {
 
     sink_data_val.value.integer = cb_data_ptr->value->value.integer;
     printf("@ %" PRIu64 " cb: 0x%02x\n", time, sink_data_val.value.integer);
+    return 0;
+}
+
+static int sim_time_cb(struct t_cb_data *cb_data_ptr) {
+    uint64_t time = ((uint64_t)cb_data_ptr->time->high << 32) | cb_data_ptr->time->low;
+    printf("@@@@@ %" PRIu64 "\n", time);
     return 0;
 }
 
@@ -54,6 +61,16 @@ PLI_INT32 serial2tcp_register_change(struct t_cb_data *cb_data_ptr) {
     cb_data2.value       = &sink_data_val;
     cb_data2.user_data   = NULL;
     assert(vpi_register_cb(&cb_data2));
+
+    // s_vpi_time timerec3 = {vpiSimTime, 0, 0, 0};
+    timerec3.type      = vpiSimTime;
+    s_cb_data cb_data3 = {0};
+    cb_data3.time      = &timerec3;
+    cb_data3.reason    = cbNextSimTime;
+    cb_data3.cb_rtn    = sim_time_cb;
+    assert(vpi_register_cb(&cb_data3));
+
+    return 0;
 }
 
 void serial2tcp_register() {
