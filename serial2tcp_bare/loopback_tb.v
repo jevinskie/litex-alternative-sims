@@ -10,8 +10,13 @@ wire serial2tcp_sink_valid;
 wire serial2tcp_sink_ready;
 wire [7:0] serial2tcp_sink_data;
 
+// reg [8*100:1] line;
+
 initial begin
     $display("initial");
+
+    // $fgets(line,'h8000_0000);
+
     sys_clk <= 0;
     // $vpi_tree;
 end

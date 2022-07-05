@@ -31,8 +31,11 @@ static PLI_INT32 sink_data_cb(struct t_cb_data *cb_data_ptr) {
 }
 
 static int sim_time_cb(struct t_cb_data *cb_data_ptr) {
+    printf("!!: %p %p\n", &cb_data3, cb_data_ptr);
+    printf("b: %p %p\n", cb_data3.time, cb_data_ptr->time);
     uint64_t time = ((uint64_t)cb_data_ptr->time->high << 32) | cb_data_ptr->time->low;
     printf("@@@@@ %" PRIu64 "\n", time);
+    // __asm__ volatile("int $0x03");
     vpiHandle hdl;
     memset(&timerec3, 0, sizeof(timerec3));
     memset(&cb_data3, 0, sizeof(cb_data3));
@@ -56,6 +59,8 @@ PLI_INT32 serial2tcp_register_change(struct t_cb_data *cb_data_ptr) {
     cb_data3.time   = &timerec3;
     cb_data3.reason = cbNextSimTime;
     cb_data3.cb_rtn = sim_time_cb;
+    printf("!: %p\n", &cb_data3);
+    printf("a: %p\n", cb_data3.time);
     assert((hdl = vpi_register_cb(&cb_data3)) && vpi_free_object(hdl));
 
     s_vpi_time timerec = {vpiSimTime, 0, 0, 0};
