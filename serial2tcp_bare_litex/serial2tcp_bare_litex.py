@@ -74,6 +74,7 @@ class SimSoC(SoCCore):
         self.submodules.uart_phy = RS232PHYModel(platform.request("serial"))
         self.comb += self.uart_phy.source.connect(self.uart_phy.sink)
 
+        self.comb += Display("$display time comb: %0d", VerilogTime())
         self.sync += Display("$display time: %0d", VerilogTime())
 
 
