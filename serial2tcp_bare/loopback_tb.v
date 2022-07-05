@@ -11,6 +11,7 @@ wire serial2tcp_sink_ready;
 wire [7:0] serial2tcp_sink_data;
 
 initial begin
+    $display("initial");
     sys_clk <= 0;
     // $vpi_tree;
 end
@@ -24,6 +25,7 @@ initial begin
 end
 
 always @(posedge sys_clk) begin
+    $display("posedge sys_clk");
     cnt <= cnt + 1;
 end
 

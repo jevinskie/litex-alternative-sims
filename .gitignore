@@ -1,3 +1,6 @@
+serial2tcp_bare/loopback_tb
+
+# litex
 **/__pycache__/
 **/build/
 **/csr.csv
@@ -6,4 +9,11 @@
 **/stream.cfg
 **/*.vpi
 
-serial2tcp_bare/loopback_tb
+# questa
+**/work
+**/*.so
+**/transcript
+
+# IntelliJ
+.idea/
+

@@ -9,6 +9,7 @@
 static vpiHandle sink_data;
 static s_vpi_value sink_data_val;
 static s_vpi_time timerec3;
+static s_cb_data cb_data3;
 
 static PLI_INT32 clk_cb(struct t_cb_data *cb_data_ptr) {
     uint64_t time = ((uint64_t)cb_data_ptr->time->high << 32) | cb_data_ptr->time->low;
@@ -32,14 +33,31 @@ static PLI_INT32 sink_data_cb(struct t_cb_data *cb_data_ptr) {
 static int sim_time_cb(struct t_cb_data *cb_data_ptr) {
     uint64_t time = ((uint64_t)cb_data_ptr->time->high << 32) | cb_data_ptr->time->low;
     printf("@@@@@ %" PRIu64 "\n", time);
+    vpiHandle hdl;
+    memset(&timerec3, 0, sizeof(timerec3));
+    memset(&cb_data3, 0, sizeof(cb_data3));
+    timerec3.type   = vpiSimTime;
+    cb_data3.time   = &timerec3;
+    cb_data3.reason = cbNextSimTime;
+    cb_data3.cb_rtn = sim_time_cb;
+    assert((hdl = vpi_register_cb(&cb_data3)) && vpi_free_object(hdl));
     return 0;
 }
 
 PLI_INT32 serial2tcp_register_change(struct t_cb_data *cb_data_ptr) {
+    vpiHandle hdl;
     vpiHandle clk = vpi_handle_by_name("serial2tcp_loopback_tb.sys_clk", NULL);
     assert(clk);
     sink_data = vpi_handle_by_name("serial2tcp_loopback_tb.serial2tcp_sink_data", NULL);
     assert(sink_data);
+
+    // s_vpi_time timerec3 = {vpiSimTime, 0, 0, 0};
+    timerec3.type   = vpiSimTime;
+    cb_data3.time   = &timerec3;
+    cb_data3.reason = cbNextSimTime;
+    cb_data3.cb_rtn = sim_time_cb;
+    assert((hdl = vpi_register_cb(&cb_data3)) && vpi_free_object(hdl));
+
     s_vpi_time timerec = {vpiSimTime, 0, 0, 0};
     s_vpi_value valrec = {vpiIntVal, {.integer = 42}};
     s_cb_data cb_data  = {0};
@@ -62,20 +80,13 @@ PLI_INT32 serial2tcp_register_change(struct t_cb_data *cb_data_ptr) {
     cb_data2.user_data   = NULL;
     assert(vpi_register_cb(&cb_data2));
 
-    // s_vpi_time timerec3 = {vpiSimTime, 0, 0, 0};
-    timerec3.type      = vpiSimTime;
-    s_cb_data cb_data3 = {0};
-    cb_data3.time      = &timerec3;
-    cb_data3.reason    = cbNextSimTime;
-    cb_data3.cb_rtn    = sim_time_cb;
-    assert(vpi_register_cb(&cb_data3));
-
     return 0;
 }
 
 void serial2tcp_register() {
     s_cb_data cb_data;
     s_vpi_time timerec = {vpiSuppressTime, 0, 0, 0};
+    printf("%s\n", __FUNCTION__);
 
     cb_data.time      = &timerec;
     cb_data.value     = 0;
