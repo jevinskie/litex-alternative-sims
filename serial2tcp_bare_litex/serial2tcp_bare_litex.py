@@ -43,11 +43,13 @@ _io = [
 
 class Platform(SimPlatform):
     def __init__(self, sim_toolchain):
-        if sim_toolchain == "verilator":
-            mname = "sim"
-        else:
+        output_dir = None
+        mname = "sim"
+        if sim_toolchain != "verilator":
             mname = escape_identifier_name(Path(__file__).stem)
+            output_dir = os.path.join("build", mname + "_" + sim_toolchain)
         super().__init__(self, _io, name=mname, toolchain=sim_toolchain)
+        self.output_dir = output_dir
 
 
 # Bench SoC ----------------------------------------------------------------------------------------
@@ -74,8 +76,8 @@ class SimSoC(SoCCore):
         self.submodules.uart_phy = RS232PHYModel(platform.request("serial"))
         self.comb += self.uart_phy.source.connect(self.uart_phy.sink)
 
-        self.comb += Display("$display time comb: %0d", VerilogTime())
-        self.sync += Display("$display time: %0d", VerilogTime())
+        # self.comb += Display("$display time comb: %0d", VerilogTime())
+        # self.sync += Display("$display time: %0d", VerilogTime())
 
 
 #
@@ -109,9 +111,11 @@ def main():
     soc_kwargs["with_uart"] = False
     soc_kwargs["ident_version"] = True
 
-    builder_kwargs["csr_csv"] = "csr.csv"
-
     soc = SimSoC(sim_toolchain=args.sim_toolchain, **soc_kwargs)
+
+    builder_kwargs["csr_csv"] = "csr.csv"
+    builder_kwargs["output_dir"] = soc.platform.output_dir
+
     if not args.debug_soc_gen:
         builder = Builder(soc, **builder_kwargs)
         for i in range(2):
