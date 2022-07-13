@@ -6,12 +6,11 @@
 import argparse
 from pathlib import Path
 
+from liteeth.phy.model import LiteEthPHYModel
 from litex.build.generic_platform import *
 from litex.build.sim import SimPlatform, sim_build_argdict, sim_build_args
 from litex.build.sim.config import SimConfig
 from litex.gen.fhdl.namer import escape_identifier_name
-from litex.gen.fhdl.verilog import VerilogTime
-from litex.soc.cores.uart import RS232PHYModel
 from litex.soc.integration.builder import *
 from litex.soc.integration.soc_core import *
 from migen import *
@@ -22,9 +21,15 @@ _io = [
     # Clk / Rst.
     ("sys_clk", 0, Pins(1)),
     ("sys_rst", 0, Pins(1)),
-    # Serial.
+    # Ethernet
     (
-        "serial",
+        "eth_clocks",
+        0,
+        Subsignal("tx", Pins(1)),
+        Subsignal("rx", Pins(1)),
+    ),
+    (
+        "eth",
         0,
         Subsignal("source_valid", Pins(1)),
         Subsignal("source_ready", Pins(1)),
@@ -70,12 +75,9 @@ class SimSoC(SoCCore):
         # CRG --------------------------------------------------------------------------------------
         self.submodules.crg = CRG(platform.request("sys_clk"))
 
-        # Serial -----------------------------------------------------------------------------------
-        self.submodules.uart_phy = RS232PHYModel(platform.request("serial"))
-        self.comb += self.uart_phy.source.connect(self.uart_phy.sink)
-
-        # self.comb += Display("$display time comb: %0d", VerilogTime())
-        # self.sync += Display("$display time: %0d", VerilogTime())
+        # Etherbone --------------------------------------------------------------------------------
+        self.submodules.ethphy = LiteEthPHYModel(self.platform.request("eth"))
+        self.add_etherbone(phy=self.ethphy, ip_address="192.168.42.50")
 
 
 #
@@ -90,7 +92,7 @@ def sim_args(parser):
 
 
 def main():
-    parser = argparse.ArgumentParser(description="LiteX Alternative Sim Test")
+    parser = argparse.ArgumentParser(description="LiteX Alternative Sim Ethernet Test")
     sim_args(parser)
     args = parser.parse_args()
 
@@ -98,7 +100,7 @@ def main():
 
     sim_config = SimConfig()
     sim_config.add_clocker("sys_clk", freq_hz=sys_clk_freq)
-    sim_config.add_module("serial2tcp", "serial", args={"port": 2430})
+    sim_config.add_module("ethernet", "eth", args={"interface": "tap0", "ip": "192.168.42.100"})
 
     soc_kwargs = soc_core_argdict(args)
     builder_kwargs = builder_argdict(args)
